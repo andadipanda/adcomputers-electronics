@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AD COMPUTERS & ELECTRONICS</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:16px system-ui;color:#14243d;background:#f4f7fb}
+header,footer{background:#092653;color:white;padding:20px}
+nav{display:flex;align-items:center;gap:20px;flex-wrap:wrap;max-width:1250px;margin:auto}
+nav img{width:75px;background:white;border-radius:8px}
+nav strong{flex:1}
+nav a,footer a{color:white}
+button,.btn{background:#c8102e;color:white;border:0;border-radius:7px;padding:12px 18px;cursor:pointer;font:inherit;text-decoration:none;display:inline-block}
+button:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1250px;margin:auto;padding:22px}
+.hero{background:linear-gradient(120deg,#092653,#1558a0);color:white;border-radius:16px;padding:60px 35px}
+.hero h1{font-size:clamp(30px,5vw,52px);margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}
+.card{background:white;border:1px solid #dce4ef;border-radius:12px;padding:20px;overflow-wrap:anywhere}
+.card img{width:100%;height:210px;object-fit:contain}
+.price{color:#c8102e;font-size:23px;font-weight:bold}
+input,select{width:100%;padding:12px;border:1px solid #b9c6d8;border-radius:7px;font:inherit;margin:8px 0}
+section{margin-bottom:30px;scroll-margin-top:20px}
+.blue{background:#123e79}
+.green{background:#168044}
+.muted{color:#64748b}
+footer{text-align:center;line-height:1.8}
+.cartline{padding:12px 0;border-bottom:1px solid #ddd}
+.cartline button{padding:5px 12px;margin:4px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+<nav>
+<img src="logo.jpg" alt="AD Logo">
+<strong>AD COMPUTERS & ELECTRONICS</strong>
+<a href="#shop" data-t="shop">Shop</a>
+<a href="#services" data-t="services">IT Services</a>
+<a href="#delivery-policy" data-t="policyNav">Delivery & warranty</a>
+<a href="#careers" data-t="careers">Careers</a>
+<a href="#cart"><span data-t="cart">Cart</span> (<span id="cartCount">0</span>)</a>
+<button id="language">FR</button>
+</nav>
+</header>
+
+<main>
+<section class="hero">
+<p>DOUALA • CAMEROON</p>
+<h1 data-t="hero">Upgrade your technology. Upgrade your life.</h1>
+<p data-t="slogan">Your trusted ICT & electronics partner in Cameroon.</p>
+<a class="btn" href="#shop" data-t="browse">Browse products</a>
+<a class="btn green" href="https://wa.me/237677551168">WhatsApp</a>
+</section>
+
+<section id="shop">
+<h2 data-t="shop">Shop</h2>
+<input id="search" placeholder="Search / Rechercher">
+<p id="status" role="status"></p>
+<div id="products" class="grid"></div>
+</section>
+
+<section id="services">
+<h2 data-t="services">IT Services</h2>
+<div class="grid">
+<div class="card">
+<h3 data-t="repair">Computer repair & maintenance</h3>
+</div>
+<div class="card">
+<h3 data-t="network">Network installation</h3>
+</div>
+<div class="card">
+<h3 data-t="training">IT training</h3>
+</div>
+<div class="card">
+<h3 data-t="procurement">IT equipment procurement</h3>
+</div>
+</div>
+</section>
+
+<section id="cart" class="card">
+<h2 data-t="cart">Cart</h2>
+<div id="cartItems"></div>
+<h3>Total: <span id="total">0</span> FCFA</h3>
+
+<label data-t="customer">Customer name</label>
+<input id="customer" autocomplete="name">
+
+<label data-t="phone">Phone number</label>
+<input id="phone" type="tel" autocomplete="tel">
+
+<label data-t="delivery">Delivery destination</label>
+<input id="destination" placeholder="City / Country">
+
+<label data-t="payment">Preferred payment method</label>
+<select id="payment">
+<option>MTN Mobile Money</option>
+<option>Orange Money</option>
+<option value="Bank transfer" data-t="bank">Bank transfer</option>
+</select>
+
+<p data-t="notice">Full payment is required before dispatch. We confirm availability, the total including delivery fees, estimated delivery time and payment instructions before you pay.</p>
+<button class="green" id="order" data-t="order">Order via WhatsApp</button>
+</section>
+
+<section id="delivery-policy" class="card" aria-labelledby="policy-title">
+<h2 id="policy-title" data-t="policy">Delivery, payment & warranty</h2>
+<div class="grid">
+<div><h3 data-t="coverageTitle">Delivery across Cameroon</h3><p data-t="coverageText">Delivery is available across Cameroon. Product availability, the total cost including delivery fees, and the estimated delivery time are confirmed before payment.</p></div>
+<div><h3 data-t="paymentTitle">Payment before dispatch</h3><p data-t="paymentText">We accept MTN Mobile Money, Orange Money and bank transfers. Full payment is required before dispatch. Contact our team for payment instructions.</p></div>
+<div><h3 data-t="warrantyTitle">7-day warranty</h3><p data-t="warrantyText">The warranty lasts 7 days from the delivery date. We offer repair or replacement. No refunds.</p></div>
+</div>
+<p><a href="https://wa.me/237677551168" data-t="policyContact">Orders and assistance: WhatsApp +237 677 551 168</a></p>
+</section>
+
+<section id="careers" class="card">
+<h2 data-t="careers">Careers</h2>
+<p data-t="jobs">Contact us about Marketing and IT Technician opportunities.</p>
+<a href="mailto:adcomputers.electronics@gmail.com">adcomputers.electronics@gmail.com</a>
+</section>
+</main>
+
+<footer>
+<strong>AD COMPUTERS & ELECTRONICS</strong>
+<div>Douala Bonamoussadi – Entrée Ancien Impôt</div>
+<div><a href="tel:+237677551168">+237 677 551 168</a></div>
+<div><a href="mailto:adcomputers.electronics@gmail.com">adcomputers.electronics@gmail.com</a></div>
+<div data-t="shipping">Delivery across Cameroon</div>
+<a href="admin.html">Administrator</a>
+<div>© AD COMPUTERS & ELECTRONICS</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+const translations = {
+bank:"Virement bancaire",
+policyNav:"Livraison et garantie",
+policy:"Livraison, paiement et garantie",
+coverageTitle:"Livraison partout au Cameroun",
+coverageText:"La livraison est disponible partout au Cameroun. La disponibilité des produits, le montant total incluant les frais de livraison et le délai estimé sont confirmés avant le paiement.",
+paymentTitle:"Paiement avant expédition",
+paymentText:"Nous acceptons MTN Mobile Money, Orange Money et les virements bancaires. Le paiement intégral est requis avant expédition. Contactez notre équipe pour les instructions de paiement.",
+warrantyTitle:"Garantie de 7 jours",
+warrantyText:"La garantie dure 7 jours à compter de la date de livraison. Nous proposons une réparation ou un remplacement. Aucun remboursement.",
+policyContact:"Commandes et assistance : WhatsApp +237 677 551 168",
+
+shop:'Boutique',
+services:'Services informatiques',
+careers:'Carrières',
+cart:'Panier',
+hero:'Modernisez votre technologie. Améliorez votre vie.',
+slogan:'Votre partenaire de confiance en TIC et électronique au Cameroun.',
+browse:'Voir les produits',
+repair:'Réparation et maintenance informatique',
+network:'Installation de réseaux',
+training:'Formation informatique',
+procurement:'Fourniture de matériel informatique',
+customer:'Nom du client',
+phone:'Numéro de téléphone',
+delivery:'Destination de livraison',
+payment:'Mode de paiement souhaité',
+notice:'Le paiement intégral est requis avant expédition. Nous confirmons la disponibilité, le montant total avec les frais de livraison, le délai estimé et les instructions de paiement avant votre règlement.',
+order:'Commander sur WhatsApp',
+jobs:'Contactez-nous pour les postes de commercial et technicien informatique.',
+shipping:'Livraison partout au Cameroun'
+};
+
+const original = new Map();
+document.querySelectorAll('[data-t]').forEach(el=>{
+original.set(el,el.textContent);
+});
+
+let lang='en';
+let products=[];
+let cart=new Map();
+let loading=true;
+let loadError=false;
+
+const money=n=>Number(n).toLocaleString('fr-FR');
+const tr=(en,fr)=>lang==='fr'?fr:en;
+const name=p=>lang==='fr'?(p.name_fr||p.name):p.name;
+
+function button(text,action){
+const b=document.createElement('button');
+b.textContent=text;
+b.onclick=action;
+return b;
+}
+
+function text(tag,value,parent,cls){
+const el=document.createElement(tag);
+el.textContent=value;
+if(cls)el.className=cls;
+parent.append(el);
+return el;
+}
+
+function render(){
+$('products').replaceChildren();
+
+if(loading){
+$('status').textContent=tr('Loading products...','Chargement des produits...');
+return;
+}
+
+if(loadError){
+$('status').textContent=tr('Catalogue unavailable. Please contact us on WhatsApp.','Catalogue indisponible. Contactez-nous sur WhatsApp.');
+return;
+}
+
+const q=$('search').value.toLowerCase();
+
+const filtered=products.filter(p=>
+[p.name,p.name_fr,p.brand,p.sku].join(' ').toLowerCase().includes(q));
+
+$('status').textContent=filtered.length
+?''
+:tr('No products available.','Aucun produit disponible.');
+
+for(const p of filtered){
+const card=document.createElement('article');
+card.className='card';
+
+if(p.image_url){
+const im=document.createElement('img');
+im.src=p.image_url;
+im.alt=name(p);
+im.loading='lazy';
+card.append(im);
+}
+
+text('h3',name(p),card);
+text('p',p.brand||'',card,'muted');
+text('p',lang==='fr'?(p.description_fr||p.description||''):(p.description||''),card);
+text('p',money(p.price)+' FCFA',card,'price');
+
+text('p',p.stock>0
+?tr('In stock: ','En stock : ')+p.stock
+:tr('Out of stock','Rupture de stock'),card);
+
+const b=button(tr('Add to cart','Ajouter au panier'),()=>{
+const qty=cart.get(p.id)||0;
+if(qty>=p.stock){
+alert(tr('Stock limit reached.','Stock maximum atteint.'));
+return;
+}
+cart.set(p.id,qty+1);
+renderCart();
+});
+
+b.disabled=p.stock<=0;
+card.append(b);
+$('products').append(card);
+}
+}
+
+function renderCart(){
+$('cartItems').replaceChildren();
+let total=0,count=0;
+
+for(const [id,qty] of cart){
+const p=products.find(x=>x.id===id);
+if(!p)continue;
+
+total+=Number(p.price)*qty;
+count+=qty;
+
+const line=document.createElement('div');
+line.className='cartline';
+
+text('strong',name(p),line);
+text('p',qty+' × '+money(p.price)+' FCFA',line);
+
+line.append(button('-',()=>{
+if(qty<=1)cart.delete(id);
+else cart.set(id,qty-1);
+renderCart();
+}));
+
+line.append(button('+',()=>{
+if(qty<p.stock)cart.set(id,qty+1);
+renderCart();
+}));
+
+line.append(button(tr('Remove','Retirer'),()=>{
+cart.delete(id);
+renderCart();
+}));
+
+$('cartItems').append(line);
+}
+
+if(!count){
+text('p',tr('Your cart is empty.','Votre panier est vide.'),$('cartItems'));
+}
+
+$('total').textContent=money(total);
+$('cartCount').textContent=count;
+$('order').disabled=!count;
+}
+
+$('language').onclick=()=>{
+lang=lang==='en'?'fr':'en';
+document.documentElement.lang=lang;
+$('language').textContent=lang==='en'?'FR':'EN';
+
+document.querySelectorAll('[data-t]').forEach(el=>{
+el.textContent=lang==='fr'
+?translations[el.dataset.t]||original.get(el)
+:original.get(el);
+});
+
+render();
+renderCart();
+};
+
+$('search').oninput=render;
+
+$('order').onclick=()=>{
+if(!cart.size)return;
+
+if(!$('customer').value.trim()||
+!$('phone').value.trim()||
+!$('destination').value.trim()){
+alert(tr('Please enter your name, phone and destination.','Veuillez saisir votre nom, téléphone et destination.'));
+return;
+}
+
+let lines=['AD COMPUTERS & ELECTRONICS',
+tr('New order request','Nouvelle demande de commande')];
+
+let total=0;
+
+for(const [id,qty] of cart){
+const p=products.find(x=>x.id===id);
+if(!p)continue;
+total+=Number(p.price)*qty;
+lines.push(name(p)+' x '+qty+' = '+money(p.price*qty)+' FCFA');
+}
+
+lines.push(
+'Subtotal: '+money(total)+' FCFA',
+'Name: '+$('customer').value,
+'Phone: '+$('phone').value,
+'Destination: '+$('destination').value,
+'Payment preference: '+$('payment').value,
+'Please confirm stock, delivery fees and payment instructions.'
+);
+
+window.location.href='https://wa.me/237677551168?text='+encodeURIComponent(lines.join('\n'));
+};
+
+async function load(){
+try{
+const db=supabase.createClient(
+'https://ynkplcywkqqesggmrexf.supabase.co',
+'sb_publishable_agGZRBGSvqdQk0TsAQGW-A_94wWz2mh'
+);
+
+const {data,error}=await db.from('products')
+.select('id,name,name_fr,brand,sku,description,description_fr,price,stock,image_url')
+.eq('active',true)
+.order('name');
+
+if(error)throw error;
+products=data||[];
+
+}catch(e){
+console.error(e);
+loadError=true;
+}finally{
+loading=false;
+render();
+renderCart();
+}
+}
+
+renderCart();
+render();
+load();
+</script>
+</body>
+</html>
