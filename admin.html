@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AD Computers | Admin</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5fa;color:#14243d;font:16px system-ui}
+header{background:#092653;color:white;padding:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header img{width:65px;border-radius:8px}
+header a{color:white;margin-left:auto}
+main{max-width:1100px;margin:auto;padding:24px}
+.card{background:white;border:1px solid #dce4ef;border-radius:14px;padding:24px;margin-bottom:20px}
+label{display:block;margin:12px 0 5px}
+input,select,textarea,button{font:inherit;padding:10px;border:1px solid #b9c6d8;border-radius:7px}
+input,select,textarea{width:100%}
+button{background:#123e79;color:white;cursor:pointer;border:0}
+button:disabled{opacity:.5}
+button.red{background:#b71930}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.metric{font-size:28px;font-weight:bold}
+table{border-collapse:collapse;width:100%}
+td,th{text-align:left;padding:10px;border-bottom:1px solid #ddd}
+td img{width:55px;height:55px;object-fit:contain}
+#status{white-space:pre-wrap;overflow-wrap:anywhere}
+[hidden]{display:none!important}
+</style>
+<header>
+<img src="logo.jpg" alt="AD">
+<strong>AD COMPUTERS & ELECTRONICS | ADMIN</strong>
+<a href="index.html">View shop</a>
+</header>
+<main>
+<p id="status" role="status">Connecting...</p>
+<section class="card" id="login" hidden>
+<h1>Administrator sign in</h1>
+<form id="loginForm">
+<label>Email
+<input id="email" type="email" autocomplete="username" required value="adcomputers.electronics@gmail.com">
+</label>
+<label>Password
+<input id="password" type="password" autocomplete="current-password" required>
+</label>
+<p><button>Sign in</button></p>
+</form>
+</section>
+<section id="dashboard" hidden>
+<div class="grid">
+<div class="card">Products<div class="metric" id="count">0</div></div>
+<div class="card">Units in stock<div class="metric" id="units">0</div></div>
+<div class="card">Stock retail value (FCFA)<div class="metric" id="value">0</div></div>
+</div>
+<button id="logout">Sign out</button>
+<section class="card">
+<h2 id="formTitle">Add product</h2>
+<form id="productForm">
+<div class="grid">
+<label>Product name<input id="name" required></label>
+<label>French name<input id="name_fr"></label>
+<label>Category<select id="category_id"></select></label>
+<label>Brand<input id="brand"></label>
+<label>SKU<input id="sku"></label>
+<label>Price (FCFA)<input id="price" type="number" min="0" max="999999999999" step="1" required></label>
+<label>Stock<input id="stock" type="number" min="0" max="2147483647" step="1" required></label>
+<label>Product photo (max 5 MB)<input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
+</div>
+<label>Description<textarea id="description"></textarea></label>
+<label>French description<textarea id="description_fr"></textarea></label>
+<label><input id="active" type="checkbox" checked style="width:auto"> Visible in shop</label>
+<p>
+<button id="save">Save product</button>
+<button type="button" id="cancel">Clear form</button>
+</p>
+</form>
+</section>
+<section class="card">
+<h2>Product inventory</h2>
+<input id="search" placeholder="Search products">
+<div style="overflow:auto">
+<table>
+<thead><tr>
+<th>Photo</th><th>Name</th><th>Price</th>
+<th>Stock</th><th>Visible</th><th>Actions</th>
+</tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+</section>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const db = supabase.createClient(
+'https://ynkplcywkqqesggmrexf.supabase.co',
+'sb_publishable_agGZRBGSvqdQk0TsAQGW-A_94wWz2mh'
+);
+
+const $ = id => document.getElementById(id);
+let products = [], editing = null;
+const fields = ['name','name_fr','brand','sku','description','description_fr'];
+const msg = t => $('status').textContent = t;
+
+function fail(e){
+msg(e.message || String(e));
+}
+
+function check(r){
+if(r.error) throw r.error;
+return r.data;
+}
+
+function reset(){
+editing = null;
+$('productForm').reset();
+$('formTitle').textContent = 'Add product';
+$('active').checked = true;
+}
+
+function render(){
+let q = $('search').value.toLowerCase();
+$('rows').replaceChildren();
+
+for(const p of products.filter(p =>
+[p.name,p.brand,p.sku].join(' ').toLowerCase().includes(q))){
+
+let tr = document.createElement('tr');
+let td = tr.insertCell();
+
+if(p.image_url){
+let im = document.createElement('img');
+im.src = p.image_url;
+im.alt = '';
+td.append(im);
+}
+
+for(const v of [
+p.name,
+Number(p.price).toLocaleString(),
+p.stock,
+p.active ? 'Yes' : 'No'
+]){
+tr.insertCell().textContent = v;
+}
+
+td = tr.insertCell();
+let b = document.createElement('button');
+b.textContent = 'Edit';
+
+b.onclick = () => {
+editing = p;
+for(const f of fields) $(f).value = p[f] ?? '';
+for(const f of ['price','stock','category_id'])
+$(f).value = p[f] ?? '';
+$('active').checked = p.active;
+$('photo').value = '';
+$('formTitle').textContent = 'Edit product';
+$('productForm').scrollIntoView({behavior:'smooth'});
+};
+
+td.append(b);
+
+let d = document.createElement('button');
+d.className = 'red';
+d.textContent = 'Delete';
+
+d.onclick = async () => {
+if(!confirm('Delete '+p.name+'?')) return;
+try{
+check(await db.from('products').delete().eq('id',p.id));
+reset();
+await load();
+msg('Product deleted.');
+}catch(e){fail(e);}
+};
+
+td.append(' ',d);
+$('rows').append(tr);
+}
+
+$('count').textContent = products.length;
+$('units').textContent = products.reduce((s,p)=>s+p.stock,0);
+$('value').textContent = products.reduce(
+(s,p)=>s+p.stock*Number(p.price),0
+).toLocaleString();
+}
+
+async function load(){
+products = check(await db.from('products')
+.select('*').order('created_at',{ascending:false}));
+render();
+}
+
+async function start(){
+try{
+let session = check(await db.auth.getSession()).session;
+
+if(!session){
+$('login').hidden = false;
+$('dashboard').hidden = true;
+msg('Sign in to manage your shop.');
+return;
+}
+
+if(!check(await db.rpc('is_admin'))){
+await db.auth.signOut();
+throw Error('This account is not authorized as an administrator.');
+}
+
+let cats = check(await db.from('categories')
+.select('id,name').order('name'));
+
+$('category_id').replaceChildren(
+new Option('No category',''),
+...cats.map(c=>new Option(c.name,c.id))
+);
+
+await load();
+$('login').hidden = true;
+$('dashboard').hidden = false;
+msg('Administrator connected.');
+
+}catch(e){
+$('login').hidden = false;
+$('dashboard').hidden = true;
+fail(e);
+}
+}
+
+$('loginForm').onsubmit = async e => {
+e.preventDefault();
+try{
+check(await db.auth.signInWithPassword({
+email:$('email').value,
+password:$('password').value
+}));
+$('password').value = '';
+await start();
+}catch(e){fail(e);}
+};
+
+$('logout').onclick = async () => {
+try{
+check(await db.auth.signOut());
+reset();
+await start();
+}catch(e){fail(e);}
+};
+
+$('cancel').onclick = reset;
+$('search').oninput = render;
+
+$('productForm').onsubmit = async e => {
+e.preventDefault();
+$('save').disabled = true;
+
+try{
+let p = {};
+for(const f of fields)
+p[f] = $(f).value.trim() || null;
+
+p.price = Number($('price').value);
+p.stock = Number($('stock').value);
+p.category_id = $('category_id').value || null;
+p.active = $('active').checked;
+
+let file = $('photo').files[0];
+
+if(file){
+let ext = {
+'image/jpeg':'jpg',
+'image/png':'png',
+'image/webp':'webp'
+}[file.type];
+
+if(!ext || file.size > 5242880)
+throw Error('Choose a JPEG, PNG or WebP image under 5 MB.');
+
+let path = crypto.randomUUID()+'.'+ext;
+
+check(await db.storage.from('product-images')
+.upload(path,file,{contentType:file.type}));
+
+p.image_url = db.storage.from('product-images')
+.getPublicUrl(path).data.publicUrl;
+}
+
+check(await (editing
+? db.from('products').update(p).eq('id',editing.id)
+: db.from('products').insert(p)));
+
+reset();
+await load();
+msg('Product saved.');
+
+}catch(e){fail(e);}
+finally{$('save').disabled = false;}
+};
+
+start();
+</script>
+</html>
