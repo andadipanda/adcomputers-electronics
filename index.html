@@ -1,3 +1,365 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AD Computers & Electronics | Douala</title><style>
-*{box-sizing:border-box}body{margin:0;font:16px system-ui;color:#14243d;background:#f5f7fb}header,footer{background:#092653;color:white;padding:22px max(5vw,20px)}header{display:flex;align-items:center;gap:18px;flex-wrap:wrap}header img{width:82px;border-radius:8px}nav{display:flex;gap:18px;flex-wrap:wrap;margin-left:auto}a{color:inherit}button,input,select,textarea{font:inherit;padding:12px;border:1px solid #ccd5e2;border-radius:8px}button,.btn{background:#c91330;color:white;border:0;cursor:pointer;padding:12px 18px;border-radius:8px;text-decoration:none;display:inline-block}main{max-width:1200px;margin:auto;padding:24px}.hero{background:linear-gradient(120deg,#092653,#1458a5);color:white;padding:clamp(24px,6vw,72px);border-radius:20px}h1{font-size:clamp(32px,5vw,58px);max-width:760px;margin:12px 0}h2{font-size:28px}section{margin:35px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.card{background:white;border:1px solid #e0e6ef;border-radius:14px;padding:20px}.symbol{font-size:52px;background:#edf3ff;border-radius:10px;padding:24px;text-align:center}.muted{color:#52647a}label{display:block;margin:12px 0 4px}input,select,textarea{width:100%}nav button{padding:8px 12px}footer a{overflow-wrap:anywhere}.line{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0}.line button{padding:6px 10px}html{scroll-behavior:smooth}</style><header><img src="logo.jpg" alt="AD logo"><strong>AD COMPUTERS & ELECTRONICS</strong><nav><a href="#shop" data-t="shop">Shop</a><a href="#services" data-t="services">IT Services</a><a href="#careers" data-t="careers">Careers</a><a href="#cart" id="cartnav">Cart (0)</a><button id="lang">FR</button></nav></header><main><div class="hero"><small>DOUALA • CAMEROON</small><h1 data-t="hero">Upgrade your technology. Upgrade your life.</h1><p data-t="tag">Your trusted ICT & electronics partner in Cameroon.</p><a class="btn" href="#shop" data-t="browse">Browse catalogue</a></div><section id="shop"><h2 data-t="shop">Shop</h2><p class="muted" data-t="notice">Request current prices in FCFA and availability. Catalogue categories are not confirmed stock.</p><input id="search" placeholder="Search / Rechercher"><div id="products" class="grid" style="margin-top:16px"></div></section><section id="cart" class="card"><h2 data-t="cart">Your order request</h2><div id="items"></div><form id="order"><label data-t="name">Name</label><input id="customer" required><label data-t="destination">Delivery destination (city, country)</label><input id="destination" required><label data-t="payment">Preferred payment</label><select id="payment"><option>MTN Mobile Money</option><option>Orange Money</option><option>Cash (subject to confirmation)</option></select><p class="muted" data-t="quote">Prices, shipping fees and payment instructions will be confirmed by our team. No online payment is collected.</p><button data-t="send">Send order request via WhatsApp</button></form></section><section id="services"><h2 data-t="services">IT Services</h2><div class="grid" id="servicegrid"></div></section><section id="careers" class="card"><h2 data-t="careers">Careers</h2><p data-t="jobs">Interested in IT Technician or Marketing & Sales roles? Send your CV and cover letter by email to inquire about current openings.</p><a class="btn" href="mailto:adcomputers.electronics@gmail.com?subject=Job%20application" data-t="apply">Apply by email</a></section><section class="card"><h2 data-t="vision">Our vision</h2><p data-t="visiontext">To become a leading ICT and electronics solutions provider in Cameroon through quality, innovation and customer satisfaction.</p></section></main><footer><strong>AD COMPUTERS & ELECTRONICS</strong><p>Douala Bonamoussadi – Entrée Ancien Impôt</p><p><a href="tel:+237674869029">+237 674 869 029</a> / <a href="tel:+237677551168">+237 677 551 168</a> / <a href="tel:+237640965722">+237 640 965 722</a></p><a href="mailto:adcomputers.electronics@gmail.com">adcomputers.electronics@gmail.com</a> · <a href="https://wa.me/237674869029">WhatsApp</a></footer><script>
-const dict={shop:'Boutique',services:'Services informatiques',careers:'Carrières',hero:'Modernisez votre technologie. Améliorez votre quotidien.',tag:'Votre partenaire de confiance en TIC et électronique au Cameroun.',browse:'Voir le catalogue',notice:'Demandez les prix en FCFA et la disponibilité. Les catégories ne constituent pas un stock confirmé.',cart:'Votre demande de commande',name:'Nom',destination:'Destination (ville, pays)',payment:'Mode de paiement souhaité',quote:'Notre équipe confirmera les prix, les frais de livraison et les instructions de paiement. Aucun paiement en ligne.',send:'Envoyer la demande par WhatsApp',jobs:'Intéressé par un poste de technicien informatique ou de commercial ? Envoyez votre CV et lettre de motivation pour connaître les postes disponibles.',apply:'Postuler par e-mail',vision:'Notre vision',visiontext:'Devenir un acteur majeur des solutions TIC et électroniques au Cameroun grâce à la qualité, à l’innovation et à la satisfaction client.'};let fr=false;const original={};document.querySelectorAll('[data-t]').forEach(e=>original[e.dataset.t]=e.textContent);const products=[['💻','Laptops','Ordinateurs portables'],['🖥️','Desktop computers','Ordinateurs de bureau'],['🖨️','Printers','Imprimantes'],['📡','Networking equipment','Équipements réseau'],['🎧','Accessories','Accessoires'],['📷','Security cameras','Caméras de surveillance']];let cart={};try{cart=JSON.parse(localStorage.getItem('adcart')||'{}')}catch{};const $=id=>document.getElementById(id);function render(){document.documentElement.lang=fr?'fr':'en';document.querySelectorAll('[data-t]').forEach(e=>e.textContent=fr?dict[e.dataset.t]:original[e.dataset.t]);$('lang').textContent=fr?'EN':'FR';let q=$('search').value.toLowerCase();$('products').innerHTML=products.map((p,i)=>({p,i})).filter(({p})=>p.slice(1).join(' ').toLowerCase().includes(q)).map(({p,i})=>`<article class="card"><div class="symbol">${p[0]}</div><h3>${p[fr?2:1]}</h3><p>${fr?'Prix sur demande':'Price on request'}</p><button onclick="add(${i},1)">${fr?'Ajouter à la demande':'Add to request'}</button></article>`).join('');$('items').innerHTML=Object.keys(cart).filter(i=>products[i]&&cart[i]>0).map(i=>`<div class="line"><span>${products[i][fr?2:1]} × ${cart[i]}</span><div><button onclick="add(${i},-1)">−</button> <button onclick="add(${i},1)">+</button></div></div>`).join('')||(fr?'Votre panier est vide.':'Your cart is empty.');$('cartnav').textContent=(fr?'Panier':'Cart')+' ('+Object.values(cart).reduce((a,b)=>a+b,0)+')';$('servicegrid').innerHTML=(fr?['Maintenance et réparation','Installation réseau','Assistance technique']:['Maintenance and repair','Network installation','Technical support']).map(s=>`<div class="card"><h3>${s}</h3><a href="https://wa.me/237674869029?text=${encodeURIComponent(s)}">WhatsApp</a></div>`).join('')};function add(i,n){cart[i]=Math.max(0,(cart[i]||0)+n);try{localStorage.setItem('adcart',JSON.stringify(cart))}catch{}render()}$('lang').onclick=()=>{fr=!fr;render()};$('search').oninput=render;$('order').onsubmit=e=>{e.preventDefault();let lines=Object.keys(cart).filter(i=>products[i]&&cart[i]>0).map(i=>products[i][fr?2:1]+' x '+cart[i]);if(!lines.length){alert(fr?'Ajoutez un produit.':'Add a product first.');return}let msg=['AD COMPUTERS & ELECTRONICS – Order request',...lines,'Name: '+$('customer').value,'Destination: '+$('destination').value,'Payment preference: '+$('payment').value,'Please confirm price and delivery.'].join('\n');window.open('https://wa.me/237674869029?text='+encodeURIComponent(msg),'_blank','noopener')};render();</script></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AD COMPUTERS & ELECTRONICS</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:16px system-ui;color:#14243d;background:#f4f7fb}
+header,footer{background:#092653;color:white;padding:20px}
+nav{display:flex;align-items:center;gap:20px;flex-wrap:wrap;max-width:1250px;margin:auto}
+nav img{width:75px;background:white;border-radius:8px}
+nav strong{flex:1}
+nav a,footer a{color:white}
+button,.btn{background:#c8102e;color:white;border:0;border-radius:7px;padding:12px 18px;cursor:pointer;font:inherit;text-decoration:none;display:inline-block}
+button:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1250px;margin:auto;padding:22px}
+.hero{background:linear-gradient(120deg,#092653,#1558a0);color:white;border-radius:16px;padding:60px 35px}
+.hero h1{font-size:clamp(30px,5vw,52px);margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}
+.card{background:white;border:1px solid #dce4ef;border-radius:12px;padding:20px;overflow-wrap:anywhere}
+.card img{width:100%;height:210px;object-fit:contain}
+.price{color:#c8102e;font-size:23px;font-weight:bold}
+input,select{width:100%;padding:12px;border:1px solid #b9c6d8;border-radius:7px;font:inherit;margin:8px 0}
+section{margin-bottom:30px;scroll-margin-top:20px}
+.blue{background:#123e79}
+.green{background:#168044}
+.muted{color:#64748b}
+footer{text-align:center;line-height:1.8}
+.cartline{padding:12px 0;border-bottom:1px solid #ddd}
+.cartline button{padding:5px 12px;margin:4px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+<nav>
+<img src="logo.jpg" alt="AD Logo">
+<strong>AD COMPUTERS & ELECTRONICS</strong>
+<a href="#shop" data-t="shop">Shop</a>
+<a href="#services" data-t="services">IT Services</a>
+<a href="#careers" data-t="careers">Careers</a>
+<a href="#cart"><span data-t="cart">Cart</span> (<span id="cartCount">0</span>)</a>
+<button id="language">FR</button>
+</nav>
+</header>
+
+<main>
+<section class="hero">
+<p>DOUALA • CAMEROON</p>
+<h1 data-t="hero">Upgrade your technology. Upgrade your life.</h1>
+<p data-t="slogan">Your trusted ICT & electronics partner in Cameroon.</p>
+<a class="btn" href="#shop" data-t="browse">Browse products</a>
+<a class="btn green" href="https://wa.me/237674869029">WhatsApp</a>
+</section>
+
+<section id="shop">
+<h2 data-t="shop">Shop</h2>
+<input id="search" placeholder="Search / Rechercher">
+<p id="status" role="status"></p>
+<div id="products" class="grid"></div>
+</section>
+
+<section id="services">
+<h2 data-t="services">IT Services</h2>
+<div class="grid">
+<div class="card">
+<h3 data-t="repair">Computer repair & maintenance</h3>
+</div>
+<div class="card">
+<h3 data-t="network">Network installation</h3>
+</div>
+<div class="card">
+<h3 data-t="training">IT training</h3>
+</div>
+<div class="card">
+<h3 data-t="procurement">IT equipment procurement</h3>
+</div>
+</div>
+</section>
+
+<section id="cart" class="card">
+<h2 data-t="cart">Cart</h2>
+<div id="cartItems"></div>
+<h3>Total: <span id="total">0</span> FCFA</h3>
+
+<label data-t="customer">Customer name</label>
+<input id="customer" autocomplete="name">
+
+<label data-t="phone">Phone number</label>
+<input id="phone" type="tel" autocomplete="tel">
+
+<label data-t="delivery">Delivery destination</label>
+<input id="destination" placeholder="City / Country">
+
+<label data-t="payment">Preferred payment method</label>
+<select id="payment">
+<option>MTN Mobile Money</option>
+<option>Orange Money</option>
+<option>Cash / Espèces</option>
+</select>
+
+<p data-t="notice">Delivery fees, availability and payment instructions will be confirmed by our team.</p>
+<button class="green" id="order" data-t="order">Order via WhatsApp</button>
+</section>
+
+<section id="careers" class="card">
+<h2 data-t="careers">Careers</h2>
+<p data-t="jobs">Contact us about Marketing and IT Technician opportunities.</p>
+<a href="mailto:adcomputers.electronics@gmail.com">adcomputers.electronics@gmail.com</a>
+</section>
+</main>
+
+<footer>
+<strong>AD COMPUTERS & ELECTRONICS</strong>
+<div>Douala Bonamoussadi – Entrée Ancien Impôt</div>
+<div><a href="tel:+237674869029">+237 674 869 029</a></div>
+<div><a href="mailto:adcomputers.electronics@gmail.com">adcomputers.electronics@gmail.com</a></div>
+<div data-t="shipping">Local and international delivery on request</div>
+<a href="admin.html">Administrator</a>
+<div>© AD COMPUTERS & ELECTRONICS</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+const translations = {
+shop:'Boutique',
+services:'Services informatiques',
+careers:'Carrières',
+cart:'Panier',
+hero:'Modernisez votre technologie. Améliorez votre vie.',
+slogan:'Votre partenaire de confiance en TIC et électronique au Cameroun.',
+browse:'Voir les produits',
+repair:'Réparation et maintenance informatique',
+network:'Installation de réseaux',
+training:'Formation informatique',
+procurement:'Fourniture de matériel informatique',
+customer:'Nom du client',
+phone:'Numéro de téléphone',
+delivery:'Destination de livraison',
+payment:'Mode de paiement souhaité',
+notice:'Les frais de livraison, la disponibilité et les instructions de paiement seront confirmés par notre équipe.',
+order:'Commander sur WhatsApp',
+jobs:'Contactez-nous pour les postes de commercial et technicien informatique.',
+shipping:'Livraison locale et internationale sur demande'
+};
+
+const original = new Map();
+document.querySelectorAll('[data-t]').forEach(el=>{
+original.set(el,el.textContent);
+});
+
+let lang='en';
+let products=[];
+let cart=new Map();
+let loading=true;
+let loadError=false;
+
+const money=n=>Number(n).toLocaleString('fr-FR');
+const tr=(en,fr)=>lang==='fr'?fr:en;
+const name=p=>lang==='fr'?(p.name_fr||p.name):p.name;
+
+function button(text,action){
+const b=document.createElement('button');
+b.textContent=text;
+b.onclick=action;
+return b;
+}
+
+function text(tag,value,parent,cls){
+const el=document.createElement(tag);
+el.textContent=value;
+if(cls)el.className=cls;
+parent.append(el);
+return el;
+}
+
+function render(){
+$('products').replaceChildren();
+
+if(loading){
+$('status').textContent=tr('Loading products...','Chargement des produits...');
+return;
+}
+
+if(loadError){
+$('status').textContent=tr('Catalogue unavailable. Please contact us on WhatsApp.','Catalogue indisponible. Contactez-nous sur WhatsApp.');
+return;
+}
+
+const q=$('search').value.toLowerCase();
+
+const filtered=products.filter(p=>
+[p.name,p.name_fr,p.brand,p.sku].join(' ').toLowerCase().includes(q));
+
+$('status').textContent=filtered.length
+?''
+:tr('No products available.','Aucun produit disponible.');
+
+for(const p of filtered){
+const card=document.createElement('article');
+card.className='card';
+
+if(p.image_url){
+const im=document.createElement('img');
+im.src=p.image_url;
+im.alt=name(p);
+im.loading='lazy';
+card.append(im);
+}
+
+text('h3',name(p),card);
+text('p',p.brand||'',card,'muted');
+text('p',lang==='fr'?(p.description_fr||p.description||''):(p.description||''),card);
+text('p',money(p.price)+' FCFA',card,'price');
+
+text('p',p.stock>0
+?tr('In stock: ','En stock : ')+p.stock
+:tr('Out of stock','Rupture de stock'),card);
+
+const b=button(tr('Add to cart','Ajouter au panier'),()=>{
+const qty=cart.get(p.id)||0;
+if(qty>=p.stock){
+alert(tr('Stock limit reached.','Stock maximum atteint.'));
+return;
+}
+cart.set(p.id,qty+1);
+renderCart();
+});
+
+b.disabled=p.stock<=0;
+card.append(b);
+$('products').append(card);
+}
+}
+
+function renderCart(){
+$('cartItems').replaceChildren();
+let total=0,count=0;
+
+for(const [id,qty] of cart){
+const p=products.find(x=>x.id===id);
+if(!p)continue;
+
+total+=Number(p.price)*qty;
+count+=qty;
+
+const line=document.createElement('div');
+line.className='cartline';
+
+text('strong',name(p),line);
+text('p',qty+' × '+money(p.price)+' FCFA',line);
+
+line.append(button('-',()=>{
+if(qty<=1)cart.delete(id);
+else cart.set(id,qty-1);
+renderCart();
+}));
+
+line.append(button('+',()=>{
+if(qty<p.stock)cart.set(id,qty+1);
+renderCart();
+}));
+
+line.append(button(tr('Remove','Retirer'),()=>{
+cart.delete(id);
+renderCart();
+}));
+
+$('cartItems').append(line);
+}
+
+if(!count){
+text('p',tr('Your cart is empty.','Votre panier est vide.'),$('cartItems'));
+}
+
+$('total').textContent=money(total);
+$('cartCount').textContent=count;
+$('order').disabled=!count;
+}
+
+$('language').onclick=()=>{
+lang=lang==='en'?'fr':'en';
+document.documentElement.lang=lang;
+$('language').textContent=lang==='en'?'FR':'EN';
+
+document.querySelectorAll('[data-t]').forEach(el=>{
+el.textContent=lang==='fr'
+?translations[el.dataset.t]||original.get(el)
+:original.get(el);
+});
+
+render();
+renderCart();
+};
+
+$('search').oninput=render;
+
+$('order').onclick=()=>{
+if(!cart.size)return;
+
+if(!$('customer').value.trim()||
+!$('phone').value.trim()||
+!$('destination').value.trim()){
+alert(tr('Please enter your name, phone and destination.','Veuillez saisir votre nom, téléphone et destination.'));
+return;
+}
+
+let lines=['AD COMPUTERS & ELECTRONICS',
+tr('New order request','Nouvelle demande de commande')];
+
+let total=0;
+
+for(const [id,qty] of cart){
+const p=products.find(x=>x.id===id);
+if(!p)continue;
+total+=Number(p.price)*qty;
+lines.push(name(p)+' x '+qty+' = '+money(p.price*qty)+' FCFA');
+}
+
+lines.push(
+'Subtotal: '+money(total)+' FCFA',
+'Name: '+$('customer').value,
+'Phone: '+$('phone').value,
+'Destination: '+$('destination').value,
+'Payment preference: '+$('payment').value,
+'Please confirm stock, delivery fees and payment instructions.'
+);
+
+window.location.href='https://wa.me/237674869029?text='+encodeURIComponent(lines.join('\n'));
+};
+
+async function load(){
+try{
+const db=supabase.createClient(
+'https://ynkplcywkqqesggmrexf.supabase.co',
+'sb_publishable_agGZRBGSvqdQk0TsAQGW-A_94wWz2mh'
+);
+
+const {data,error}=await db.from('products')
+.select('id,name,name_fr,brand,sku,description,description_fr,price,stock,image_url')
+.eq('active',true)
+.order('name');
+
+if(error)throw error;
+products=data||[];
+
+}catch(e){
+console.error(e);
+loadError=true;
+}finally{
+loading=false;
+render();
+renderCart();
+}
+}
+
+renderCart();
+render();
+load();
+</script>
+</body>
+</html>
