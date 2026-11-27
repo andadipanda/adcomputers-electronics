@@ -21,7 +21,7 @@ button.red{background:#b71930}
 .metric{font-size:28px;font-weight:bold}
 table{border-collapse:collapse;width:100%}
 td,th{text-align:left;padding:10px;border-bottom:1px solid #ddd}
-td img{width:55px;height:55px;object-fit:contain}
+.metric{display:block;margin:8px 0}.order-nav{margin:16px 0 24px}.order-nav a{color:#123e79}summary{cursor:pointer;font-weight:700;padding:16px 0}#orderDetail{scroll-margin-top:20px}button:focus-visible,a:focus-visible{outline:3px solid #d13750;outline-offset:3px}td img{width:55px;height:55px;object-fit:contain}
 #status{white-space:pre-wrap;overflow-wrap:anywhere}
 [hidden]{display:none!important}
 </style>
@@ -50,7 +50,36 @@ td img{width:55px;height:55px;object-fit:contain}
 <div class="card">Units in stock<div class="metric" id="units">0</div></div>
 <div class="card">Stock retail value (FCFA)<div class="metric" id="value">0</div></div>
 </div>
-<button id="logout">Sign out</button>
+<nav class="order-nav" aria-label="Dashboard sections"><a href="#ordersPanel">Orders & payments</a> · <a href="#productForm">Products</a> · <button id="logout">Sign out</button></nav>
+<section class="card" id="ordersPanel">
+<h1>Orders & payments</h1>
+<p>Enter orders received through WhatsApp here. Payments are recorded after you verify receipt. Stock is adjusted separately in Products.</p>
+<p id="ordersMessage" role="status" aria-live="polite"></p>
+<div class="grid"><div>Orders loaded<strong class="metric" id="orderCount">0</strong></div><div>Verified receipts (FCFA)<strong class="metric" id="paidTotal">0</strong></div><div>Outstanding (FCFA)<strong class="metric" id="balanceTotal">0</strong></div></div>
+<p><button id="refreshOrders" type="button">Refresh orders</button></p>
+<details><summary>Create order from WhatsApp</summary>
+<form id="newOrderForm">
+<div class="grid"><label>Customer name<input id="orderCustomer" maxlength="200" required></label><label>Phone / WhatsApp<input id="orderPhone" maxlength="80" type="tel" required></label><label>Delivery destination<input id="orderDestination" maxlength="500" required></label></div>
+<div class="grid"><label>Product<select id="orderProduct"></select></label><label>Quantity<input id="orderQuantity" type="number" min="1" max="100000" step="1" value="1"></label></div>
+<p><button id="addOrderLine" type="button">Add item</button></p>
+<div id="draftItems"></div>
+<label>Confirmed delivery fee (FCFA)<input id="deliveryFee" type="number" min="0" max="999999999999" step="1" value="0" required></label>
+<p>Order total: <strong id="draftTotal">0 FCFA</strong></p>
+<label>Notes<textarea id="orderNotes" maxlength="5000" placeholder="Customer instructions or delivery arrangements"></textarea></label>
+<p><button id="createOrder">Save order</button></p>
+</form></details>
+<h2>Order history</h2><div class="grid"><label>Search<input id="orderSearch" placeholder="Order number, customer, phone or destination"></label><label>Status<select id="orderFilter"><option value="">All statuses</option><option value="new">New</option><option value="confirmed">Confirmed</option><option value="dispatched">Dispatched</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select></label></div>
+<div style="overflow:auto"><table><thead><tr><th>Order / date</th><th>Customer</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th><th>Action</th></tr></thead><tbody id="orderRows"></tbody></table></div>
+<p><button id="moreOrders" type="button" hidden>Load older orders</button></p>
+</section>
+<section class="card" id="orderDetail" hidden>
+<h2 id="orderDetailTitle">Order details</h2><p id="orderCustomerDetails"></p><div id="orderLineDetails"></div><p id="orderAmounts"></p>
+<form id="orderStatusForm"><div class="grid"><label>Order status<select id="detailStatus"><option value="new">New</option><option value="confirmed">Confirmed</option><option value="dispatched">Dispatched</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select></label><label>Actual delivery date<input id="deliveredOn" type="date"></label></div>
+<label>Notes<textarea id="detailNotes" maxlength="5000"></textarea></label><p><button id="updateOrder">Save status & notes</button></p></form>
+<h3>Record verified payment</h3><p>Only record money received and checked in your Mobile Money or bank account. This form does not collect or transfer money.</p>
+<form id="paymentForm"><div class="grid"><label>Amount (FCFA)<input id="paymentAmount" type="number" min="1" step="1" required></label><label>Method<select id="paymentMethod"><option>MTN Mobile Money</option><option>Orange Money</option><option>Bank transfer</option></select></label><label>Date received<input id="paymentDate" type="date" required></label></div><label>Transaction reference<input id="paymentReference" maxlength="200" required></label><p><button id="recordPayment">Record payment</button></p></form>
+<h3>Payment history</h3><div id="paymentHistory"></div><p id="orderDetailMessage" role="status" aria-live="polite"></p>
+</section>
 <section class="card">
 <h2 id="formTitle">Add product</h2>
 <form id="productForm">
@@ -188,6 +217,7 @@ async function load(){
 products = check(await db.from('products')
 .select('*').order('created_at',{ascending:false}));
 render();
+refreshOrderProducts();
 }
 
 async function start(){
@@ -195,6 +225,7 @@ try{
 let session = check(await db.auth.getSession()).session;
 
 if(!session){
+clearOrderData();
 $('login').hidden = false;
 $('dashboard').hidden = true;
 msg('Sign in to manage your shop.');
@@ -218,6 +249,7 @@ await load();
 $('login').hidden = true;
 $('dashboard').hidden = false;
 msg('Administrator connected.');
+await loadOrders();
 
 }catch(e){
 $('login').hidden = false;
@@ -242,6 +274,7 @@ $('logout').onclick = async () => {
 try{
 check(await db.auth.signOut());
 reset();
+clearOrderData();
 await start();
 }catch(e){fail(e);}
 };
@@ -295,6 +328,110 @@ msg('Product saved.');
 }catch(e){fail(e);}
 finally{$('save').disabled = false;}
 };
+
+// Order history is private to the existing shop administrators.
+let orders=[], payments=[], draft=[], selectedOrder=null, orderPage=0;
+let orderRequest=crypto.randomUUID(), paymentRequest=crypto.randomUUID();
+let detailVersion=0, orderLoading=false;
+const orderMoney=n=>Number(n).toLocaleString('fr-FR')+' FCFA';
+const doualaToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Douala',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const orderLabel=o=>'AD-'+String(o.order_number).padStart(5,'0');
+const paidFor=id=>payments.filter(p=>p.order_id===id).reduce((n,p)=>n+Number(p.amount),0);
+const orderMessage=t=>$('ordersMessage').textContent=t;
+function orderText(tag,value,parent){const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;}
+function orderButton(label,action){const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=action;return b;}
+function wholeCfa(value,min=0){const n=Number(value);if(value===''||!Number.isSafeInteger(n)||n<min||n>999999999999)throw Error('Enter valid whole CFA amounts and quantities.');return n;}
+function clearOrderData(){
+orders=[];payments=[];draft=[];selectedOrder=null;detailVersion++;orderRequest=crypto.randomUUID();paymentRequest=crypto.randomUUID();
+$('newOrderForm').reset();$('paymentForm').reset();$('orderStatusForm').reset();$('orderSearch').value='';$('orderFilter').value='';$('orderDetail').hidden=true;
+$('orderCustomerDetails').textContent='';$('orderLineDetails').replaceChildren();$('paymentHistory').replaceChildren();$('orderDetailMessage').textContent='';$('orderAmounts').textContent='';$('detailNotes').value='';orderMessage('');renderDraft();renderOrders();
+}
+function refreshOrderProducts(){
+const current=$('orderProduct').value;
+$('orderProduct').replaceChildren(new Option('Choose a product',''),...products.filter(p=>p.active).map(p=>new Option(p.name+' — '+orderMoney(p.price),String(p.id))));
+$('orderProduct').value=current;
+}
+function renderDraft(){
+$('draftItems').replaceChildren();
+let total=0;
+draft.forEach((p,i)=>{total+=p.quantity*p.price;const line=document.createElement('p');orderText('span',p.name+' × '+p.quantity+' — '+orderMoney(p.price*p.quantity)+' ',line);line.append(orderButton('Remove',()=>{draft.splice(i,1);renderDraft();}));$('draftItems').append(line);});
+const fee=Number($('deliveryFee').value);$('draftTotal').textContent=orderMoney(total+(Number.isFinite(fee)?fee:0));
+}
+async function loadOrders(append=false){
+if(orderLoading)return;
+orderLoading=true;$('refreshOrders').disabled=true;$('moreOrders').disabled=true;
+try{
+const page=append?orderPage+1:0;
+const batch=check(await db.from('ad_shop_orders').select('*').order('created_at',{ascending:false}).order('id').range(page*50,page*50+49));
+let batchPayments=[];
+// Fetch every payment for each loaded order, even when history exceeds the API row limit.
+if(batch.length){for(let offset=0;;offset+=500){const rows=check(await db.from('ad_shop_payments').select('*').in('order_id',batch.map(o=>o.id)).order('created_at',{ascending:false}).order('id').range(offset,offset+499));batchPayments.push(...rows);if(rows.length<500)break;}}
+orders=append?[...orders,...batch]:batch;payments=append?[...payments,...batchPayments]:batchPayments;orderPage=page;
+$('moreOrders').hidden=batch.length<50;refreshOrderProducts();renderOrders();orderMessage('Orders loaded. Totals cover the loaded orders.');
+}catch(e){orderMessage('Orders could not load. If this is your first setup, run setup_orders.sql in Supabase first. Details: '+(e.message||e));}
+finally{orderLoading=false;$('refreshOrders').disabled=false;$('moreOrders').disabled=false;}
+}
+function renderOrders(){
+$('orderRows').replaceChildren();const q=$('orderSearch').value.toLowerCase();const filter=$('orderFilter').value;
+let receipts=0,outstanding=0;
+for(const o of orders){const paid=paidFor(o.id);receipts+=paid;if(o.status!=='cancelled')outstanding+=Math.max(0,Number(o.total)-paid);
+if(filter&&o.status!==filter)continue;
+if(![orderLabel(o),o.customer_name,o.phone,o.destination].join(' ').toLowerCase().includes(q))continue;
+const tr=document.createElement('tr');for(const v of [orderLabel(o)+' / '+new Date(o.created_at).toLocaleDateString('fr-CM',{timeZone:'Africa/Douala'}),o.customer_name,o.status,orderMoney(o.total),orderMoney(paid),orderMoney(Math.max(0,Number(o.total)-paid))]){const td=tr.insertCell();td.textContent=v;}
+tr.insertCell().append(orderButton('Open',()=>openOrder(o.id)));$('orderRows').append(tr);
+}
+if(!$('orderRows').children.length){const tr=document.createElement('tr'),td=tr.insertCell();td.colSpan=7;td.textContent='No matching orders.';$('orderRows').append(tr);}
+$('orderCount').textContent=orders.length;$('paidTotal').textContent=receipts.toLocaleString('fr-FR');$('balanceTotal').textContent=outstanding.toLocaleString('fr-FR');
+}
+async function openOrder(id){
+const version=++detailVersion;selectedOrder=null;$('orderDetail').hidden=true;
+try{
+const o=check(await db.from('ad_shop_orders').select('*').eq('id',id).single());
+const items=check(await db.from('ad_shop_order_items').select('*').eq('order_id',id));
+let history=[];for(let offset=0;;offset+=500){const rows=check(await db.from('ad_shop_payments').select('*').eq('order_id',id).order('created_at',{ascending:false}).order('id').range(offset,offset+499));history.push(...rows);if(rows.length<500)break;}
+if(version!==detailVersion||$('dashboard').hidden)return;
+selectedOrder=o;paymentRequest=crypto.randomUUID();payments=payments.filter(p=>p.order_id!==id).concat(history);const at=orders.findIndex(x=>x.id===id);if(at>=0)orders[at]=o;renderOrders();
+$('orderDetailTitle').textContent=orderLabel(o);$('orderCustomerDetails').textContent=[o.customer_name,o.phone,o.destination].join(' • ');
+$('orderLineDetails').replaceChildren();for(const item of items)orderText('p',item.product_name+' × '+item.quantity+' — '+orderMoney(item.unit_price*item.quantity),$('orderLineDetails'));
+const paid=history.reduce((s,p)=>s+Number(p.amount),0),balance=Number(o.total)-paid;
+$('orderAmounts').textContent='Delivery: '+orderMoney(o.delivery_fee)+' | Total: '+orderMoney(o.total)+' | Paid: '+orderMoney(paid)+' | Balance: '+orderMoney(balance);
+$('detailStatus').value=o.status;$('detailNotes').value=o.notes;$('deliveredOn').value=o.delivered_on||'';$('deliveredOn').max=doualaToday();syncDeliveryDate();
+$('paymentForm').reset();$('paymentDate').value=doualaToday();$('paymentDate').max=doualaToday();$('paymentAmount').max=balance;$('paymentAmount').value=balance>0?balance:'';
+$('recordPayment').disabled=balance<=0||o.status==='cancelled';
+$('paymentHistory').replaceChildren();for(const p of history)orderText('p',p.paid_on+' — '+orderMoney(p.amount)+' — '+p.method+' — Ref: '+p.reference,$('paymentHistory'));
+if(!history.length)orderText('p','No payments recorded.',$('paymentHistory'));
+$('orderDetailMessage').textContent='';$('orderDetail').hidden=false;$('orderDetail').scrollIntoView({behavior:'smooth'});
+}catch(e){if(version===detailVersion)orderMessage('Could not open order: '+(e.message||e));}
+}
+function syncDeliveryDate(){const delivered=$('detailStatus').value==='delivered';$('deliveredOn').required=delivered;$('deliveredOn').disabled=!delivered;}
+$('detailStatus').onchange=syncDeliveryDate;
+$('refreshOrders').onclick=()=>loadOrders();$('moreOrders').onclick=()=>loadOrders(true);
+$('orderSearch').oninput=renderOrders;$('orderFilter').onchange=renderOrders;$('deliveryFee').oninput=renderDraft;
+$('addOrderLine').onclick=()=>{try{const p=products.find(p=>String(p.id)===$('orderProduct').value);if(!p)throw Error('Choose a product.');const quantity=wholeCfa($('orderQuantity').value,1);if(quantity>100000)throw Error('Quantity is too large.');if(draft.length>=100)throw Error('Maximum 100 order lines.');draft.push({product_ref:String(p.id),name:p.name,price:wholeCfa(String(p.price)),quantity});renderDraft();orderMessage('');}catch(e){orderMessage(e.message);}};
+$('newOrderForm').onsubmit=async e=>{
+e.preventDefault();$('createOrder').disabled=true;let saved=false;
+try{
+if(!draft.length)throw Error('Add at least one product.');
+const total=draft.reduce((n,p)=>n+p.price*p.quantity,0)+wholeCfa($('deliveryFee').value);if(!Number.isSafeInteger(total)||total<=0||total>999999999999)throw Error('Invalid order total.');
+const id=check(await db.rpc('ad_create_order',{p_customer:$('orderCustomer').value.trim(),p_phone:$('orderPhone').value.trim(),p_destination:$('orderDestination').value.trim(),p_delivery:wholeCfa($('deliveryFee').value),p_notes:$('orderNotes').value,p_items:draft.map(p=>({product_ref:p.product_ref,quantity:p.quantity})),p_request:orderRequest}));
+saved=true;orderRequest=crypto.randomUUID();draft=[];$('newOrderForm').reset();renderDraft();await loadOrders();await openOrder(id);orderMessage('Order saved. Stock has not been changed; adjust it separately in Products when you complete the sale.');
+}catch(e){orderMessage((saved?'Order saved, but refresh failed: ':'Order was not confirmed. Retry without changing the form after checking the order history. Details: ')+(e.message||e));}
+finally{$('createOrder').disabled=false;}
+};
+$('paymentForm').onsubmit=async e=>{
+e.preventDefault();if(!selectedOrder)return;const id=selectedOrder.id;const button=$('recordPayment');button.disabled=true;
+try{
+check(await db.rpc('ad_record_payment',{p_order:id,p_amount:wholeCfa($('paymentAmount').value,1),p_method:$('paymentMethod').value,p_reference:$('paymentReference').value.trim(),p_paid_on:$('paymentDate').value,p_request:paymentRequest}));
+paymentRequest=crypto.randomUUID();await loadOrders();await openOrder(id);$('orderDetailMessage').textContent='Payment recorded.';
+}catch(e){$('orderDetailMessage').textContent='Payment was not confirmed. Refresh this order to check its history before retrying. Details: '+(e.message||e);button.disabled=false;}
+};
+$('orderStatusForm').onsubmit=async e=>{
+e.preventDefault();if(!selectedOrder)return;const id=selectedOrder.id;$('updateOrder').disabled=true;
+try{check(await db.rpc('ad_update_order',{p_order:id,p_status:$('detailStatus').value,p_notes:$('detailNotes').value,p_delivered_on:$('detailStatus').value==='delivered'?$('deliveredOn').value:null}));await loadOrders();await openOrder(id);$('orderDetailMessage').textContent='Order updated.';}
+catch(e){$('orderDetailMessage').textContent=e.message||String(e);}
+finally{$('updateOrder').disabled=false;}
+};
+renderDraft();
 
 start();
 </script>
